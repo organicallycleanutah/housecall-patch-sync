@@ -84,7 +84,18 @@ module.exports = async function handler(req, res) {
     // Extract data from webhook payload
     const { event, data } = req.body;
 
-    console.log(`Event type: ${event}`);
+    console.log(`Event type: ${event || 'unknown'}`);
+    console.log('Webhook payload:', JSON.stringify(req.body));
+
+    // Handle test/ping webhooks from Housecall Pro
+    if (!event || event === 'test' || event === 'ping' || !data) {
+      console.log('✅ Test webhook received');
+      return res.status(200).json({
+        success: true,
+        message: 'Webhook endpoint is working! Test received.',
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Handle different event types
     let customer = null;
@@ -96,21 +107,22 @@ module.exports = async function handler(req, res) {
       // Extract customer from job data
       customer = data.customer;
     } else {
-      // Unknown event type
+      // Unknown event type - return 200 so webhook doesn't get disabled
       console.log(`⚠️  Unsupported event type: ${event}`);
       return res.status(200).json({
         success: true,
-        message: 'Event type not handled',
+        message: 'Event type not handled, but webhook is working',
         event
       });
     }
 
-    // Validate customer data
+    // Validate customer data - but be lenient
     if (!customer || !customer.first_name) {
-      console.error('❌ Invalid customer data in webhook');
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid customer data'
+      console.log('⚠️  No valid customer data in webhook, but returning 200');
+      return res.status(200).json({
+        success: true,
+        message: 'No customer data to sync',
+        event
       });
     }
 
