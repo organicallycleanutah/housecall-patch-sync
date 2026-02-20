@@ -14,8 +14,15 @@ const axios = require('axios');
 // Simple inline sync function to avoid module issues
 async function syncCustomer(customer) {
   try {
+    console.log('🔧 Starting syncCustomer function...');
     const PATCH_API_KEY = process.env.PATCH_API_KEY;
     const PATCH_ACCOUNT_ID = process.env.PATCH_ACCOUNT_ID;
+
+    console.log('🔑 Environment check:', {
+      hasPatchKey: !!PATCH_API_KEY,
+      hasAccountId: !!PATCH_ACCOUNT_ID,
+      keyPreview: PATCH_API_KEY ? PATCH_API_KEY.substring(0, 10) + '...' : 'NOT SET'
+    });
 
     if (!PATCH_API_KEY) {
       throw new Error('PATCH_API_KEY not configured');
@@ -38,9 +45,15 @@ async function syncCustomer(customer) {
 
     // Skip if no phone
     if (!patchContact.phone) {
-      console.log('Skipping - no phone number');
+      console.log('⚠️  Skipping - no phone number');
       return { action: 'skipped', reason: 'no_phone' };
     }
+
+    console.log('📤 Sending to Patch API:', {
+      name: `${patchContact.first_name} ${patchContact.last_name}`,
+      phone: patchContact.phone,
+      email: patchContact.email
+    });
 
     // Create contact in Patch Retention
     const response = await axios.post(
@@ -58,13 +71,19 @@ async function syncCustomer(customer) {
     return { action: 'created', contact: response.data };
 
   } catch (error) {
+    console.error('❌ Error in syncCustomer:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+
     // If error is 409 or duplicate, that's okay - contact already exists
     if (error.response && (error.response.status === 409 || error.response.status === 400)) {
-      console.log('Contact already exists or validation error');
+      console.log('⚠️  Contact already exists or validation error');
       return { action: 'skipped', reason: 'duplicate_or_validation' };
     }
 
-    console.error('Sync error:', error.message);
+    console.error('❌ Sync error:', error.message);
     throw error;
   }
 }
