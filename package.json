@@ -2,7 +2,6 @@
   "name": "housecall-patch-sync",
   "version": "1.0.0",
   "description": "Real-time sync from Housecall Pro to Patch Retention (CityGro)",
-  "type": "module",
   "scripts": {
     "test": "echo \"No tests yet\"",
     "bulk-sync": "node scripts/bulkSync.js"
