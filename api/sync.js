@@ -122,6 +122,10 @@ module.exports = async function handler(req, res) {
     if (event === 'customer.created' || event === 'customer.updated') {
       // Direct customer data
       customer = data;
+    } else if (event === 'lead.created' || event === 'lead.updated') {
+      // Lead data (treat as customer)
+      customer = data;
+      console.log('📋 Processing lead as customer');
     } else if (event === 'job.completed') {
       // Extract customer from job data
       customer = data.customer;
